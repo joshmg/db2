@@ -6,7 +6,7 @@
 
 #include <string>
 
-#pragma comment(linker, "/DEFAULTLIB:fileio.lib")
+#pragma comment(lib, "fileio.lib")
 
 // -------------------------------------------------------------- CLASS FILEIO -------------------------------------------------------------- //
 //   + open(string filename)                                                                                                                  //
