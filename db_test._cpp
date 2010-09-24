@@ -1,0 +1,147 @@
+// File: db_test.cpp
+// Written by Joshua Green
+
+#include "db.h"
+#include "predicate_lib.h"
+#include "str.h"
+#include "stopwatch.h"
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+database db;
+
+int main() {
+  db.initialize("test");
+  table* MyTable;
+
+  stopwatch watch;
+  MyTable  = db.get_table("MyTable");
+  column id, name, pet;
+  column id2, address2;
+
+  if (MyTable == 0) {
+    MyTable = db.add_table( "MyTable" );
+    id   = MyTable->add_column( column("id",    3).auto_inc() );
+    name = MyTable->add_column( column("name", 20)            );
+    pet  = MyTable->add_column( column("pet",   5).not_null() );
+    MyTable->set_key(id);
+  }
+  else {
+    id   = MyTable->get_column( "id"   );
+    name = MyTable->get_column( "name" );
+    pet  = MyTable->get_column( "pet"  );
+  }
+
+  /* ------------------------------------------------------------------ //
+  // ---------------------------- EDIT COL ---------------------------- //  
+  id = MyTable->edit_column(id, column("id", 6).auto_inc());
+  // ------------------------------------------------------------------ */
+
+  query q = query(MyTable);
+  predicate p, r, s;
+  vector<row> results;
+  
+  // ------------------------------------------------------------------ //
+  // ---------------------------- PAD ROWS ---------------------------- //
+  int NUMBER_OF_ROWS = 10000, previous_size = MyTable->size();
+  watch.start();
+  if (MyTable->size() < 8) {
+    MyTable->add_row(row().add(name, "Josh"        ).add(pet, "false"));
+    MyTable->add_row(row().add(name, "Steph"       ).add(pet, "false"));
+    MyTable->add_row(row().add(name, "Ryan"        ).add(pet, "false"));
+    MyTable->add_row(row().add(name, "Kitty Kitty" ).add(pet, "true" ));
+    MyTable->add_row(row().add(name, "Bandit"      ).add(pet, "true" ));
+    MyTable->add_row(row().add(name, "Coco"        ).add(pet, "true" ));
+    MyTable->add_row(row().add(name, "Izzy"        ).add(pet, "true" ));
+    MyTable->add_row(row().add(name, "Fishies"     ).add(pet, "true" ));
+  }
+  while (MyTable->size() < NUMBER_OF_ROWS) {
+    MyTable->add_row(row().add(name, "Name"        ).add(pet, "false"));
+  }
+  watch.stop();
+  cout << "Add Rows: (x" << (MyTable->size() - previous_size) << ") "; watch.print();
+  watch.clear();
+  // ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------ //
+  // -------------------------- EDIT STRUCTURE ------------------------ //
+  id = MyTable->edit_column(id, column("id", 6).auto_inc());
+  name = MyTable->edit_column(name, column("name", 25));
+  // ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------ //
+  // --------------------------- CHANGE KEY --------------------------- //
+  MyTable->set_key(name);
+  // ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------ //
+  // ---------------------------- OPTIMIZE ---------------------------- //
+  watch.start();
+  MyTable->optimize();
+  watch.stop();
+  cout << "Optimize: ";
+  watch.print();
+  watch.clear();
+  // ------------------------------------------------------------------ */
+
+  cout << "Table Key is " <<  "[" << MyTable->get_key().name << "]" << endl;
+  cout << "Table Size is " << MyTable->size() << endl << endl;
+  
+  /* ------------------------------------------------------------------ //
+  // ------------------------------ EDIT ------------------------------ //  
+  watch.start();
+  row MyRow = row().add(pet, "true");
+  q.where( p.And(equalto(pet, "false")) );
+  int count = MyTable->edit_row(MyTable->select(q), MyRow);
+  watch.stop();
+  cout << "Edit: (x" << count << ") " << endl << '\t';
+  q.print();
+  cout << " -> " << endl << "\t\t";
+  MyRow.print(MyTable);
+  cout << endl;
+  watch.print();
+  watch.clear();
+  p.clear();
+  // ------------------------------------------------------------------ */
+  
+  
+  // ------------------------------------------------------------------ //
+  // ----------------------------- SELECT ----------------------------- //
+  // SELECT * FROM MyTable WHERE (id < '9' AND (name = 'Josh' OR name = 'Steph') AND pet = 'false' AND name != 'Ryan')
+  /*q.where( s.And(p.And(lessthan(id, "9"))
+                 .And(equalto(pet, "false"))
+                 .And( r.Or(equalto(name, "Josh"))
+                        .Or(equalto(name, "Steph"))
+                     )
+                 .And(equalto(name, "Ryan").Not())
+                )
+         );*/
+  q.where( s.clear().And(lessthan(id, "12")) ).limit(8);
+  cout << "QUERY "; q.print(); cout << endl << endl;
+  watch.start();
+  results = MyTable->select(q);
+  watch.stop();
+  for (int i=0;i<results.size();i++) results[i].print(MyTable);
+  cout << "Select: (x" << results.size() << ") "; watch.print();
+  watch.clear();
+  // ------------------------------------------------------------------ */
+
+
+  /* ------------------------------------------------------------------ //
+  // ----------------------------- DELETE ----------------------------- //
+  cout << endl << "Deleting MyTable->select() ..." << endl;
+  watch.start();
+  q.where( );
+  MyTable->delete_row(MyTable->select( q ));
+  watch.stop();
+  //q.print();
+  cout << "Delete: "; watch.print();
+  watch.clear();
+  cout << "Table Size is " << MyTable->size() << endl << endl;
+  // ------------------------------------------------------------------ */
+
+  db.close();
+  return 0;
+}

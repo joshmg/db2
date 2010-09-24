@@ -1,0 +1,10 @@
+All files free for use and distribution. Please give credit where credit is due.
+
+
+Update: Sept 9, 2010
+
+Refer to the header files for database documentation.
+
+First README documentation of database project. All libraries compiled and linked with with MSVS 2010 "Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 16.00.30319.01 for 80x86". The library sources are also available on github (http://www.github.com/joshmg).
+
+"db_test._cpp" may be used and modified to demo the database.
